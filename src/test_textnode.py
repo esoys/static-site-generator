@@ -1,5 +1,6 @@
 import unittest
-from main import text_node_to_html_node
+from textnode_to_html import text_node_to_html_node
+from md_to_textnode import split_nodes_delimiter
 
 from textnode import TextNode, TextType
 
@@ -41,7 +42,7 @@ class TestTextNode(unittest.TestCase):
         html_node = text_node_to_html_node(node)
         self.assertEqual(html_node.tag, None)
         self.assertEqual(html_node.value, "text node")
-
+    
 
     def test_text2(self):
         node = TextNode("link node", TextType.LINK, url="www.test.de")
@@ -57,5 +58,47 @@ class TestTextNode(unittest.TestCase):
         self.assertEqual(html_node.value, "italic node")
 
 
+    def test_md_split_code(self):
+        old_nodes = [
+            TextNode("text node", TextType.TEXT),
+            TextNode("node `code` text", TextType.TEXT),
+            TextNode("ila _ic_", TextType.TEXT)
+        ]
+        new_nodes = split_nodes_delimiter(old_nodes, "`", TextType.CODE)
+        new_nodes_check = [
+            TextNode("text node", TextType.TEXT),
+            TextNode("node ", TextType.TEXT),
+            TextNode("code", TextType.CODE),
+            TextNode(" text", TextType.TEXT),
+            TextNode("ila _ic_", TextType.TEXT),
+        ]
+        self.assertEqual(new_nodes, new_nodes_check)
+
+
+    def test_md_split_code2(self):
+        old_nodes = [
+            TextNode("text node", TextType.TEXT),
+            TextNode("node code` text", TextType.TEXT),
+            TextNode("ila _ic_", TextType.TEXT)
+        ]
+        with self.assertRaises(Exception):
+            split_nodes_delimiter(old_nodes, "`", TextType.CODE)
+
+
+    def test_md_split_code3(self):
+        old_nodes = [
+            TextNode("text node", TextType.TEXT),
+            TextNode("node ` code` text", TextType.TEXT),
+            TextNode("ila _ic_", TextType.TEXT)
+        ]
+        new_nodes = split_nodes_delimiter(old_nodes, "`", TextType.CODE)
+        new_nodes_check = [
+            TextNode("text node", TextType.TEXT),
+            TextNode("node ", TextType.TEXT),
+            TextNode(" code", TextType.CODE),
+            TextNode(" text", TextType.TEXT),
+            TextNode("ila _ic_", TextType.TEXT),
+        ]
+        self.assertEqual(new_nodes, new_nodes_check)
 if __name__ == "__main__":
     unittest.main(unittest.main())      
