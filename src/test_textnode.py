@@ -1,8 +1,8 @@
 import unittest
 from textnode_to_html import text_node_to_html_node
-from md_to_textnode import split_nodes_delimiter, split_nodes_images, split_nodes_links, text_to_textnodes
+from md_to_textnode import split_nodes_delimiter, split_nodes_images, split_nodes_links, text_to_textnodes, markdown_to_blocks, block_to_blocktype
 from md_to_link import extract_markdown_images, extract_markdown_links
-from textnode import TextNode, TextType
+from textnode import TextNode, TextType, BlockType
 
 
 class TestTextNode(unittest.TestCase):
@@ -258,6 +258,120 @@ class TestTextNode(unittest.TestCase):
             ],
             new_nodes,
         )
+
+    
+    def test_markdown_to_blocks(self):
+        md = """This is **bolded** paragraph
+
+This is another paragraph with _italic_ text and `code` here
+Same paragraph but in a new line
+
+- list
+- still list"""
+
+        blocks = markdown_to_blocks(md)
+        self.assertEqual(
+            [
+                "This is **bolded** paragraph",
+                "This is another paragraph with _italic_ text and `code` here\nSame paragraph but in a new line",
+                "- list\n- still list"
+            ],
+            blocks
+        )
+ 
+    def test_markdown_to_blocks2(self):
+        md = """This is **bolded** paragraph
+
+This is another paragraph with _italic_ text and `code` here
+Same paragraph but in a new line
+
+
+
+- list
+- still list"""
+
+        blocks = markdown_to_blocks(md)
+        self.assertEqual(
+            [
+                "This is **bolded** paragraph",
+                "This is another paragraph with _italic_ text and `code` here\nSame paragraph but in a new line",
+                "- list\n- still list"
+            ],
+            blocks
+        )
+
+
+    def test_block_to_blocktype(self):
+        block = "- item\n- item2\n- item3"
+        
+        block_type = block_to_blocktype(block)
+        self.assertEqual(block_type, BlockType.UNORDERED_LIST)
+
+    def test_block_to_blocktype2(self):
+        block = "1. item1\n2. item2\n3. item3"
+        
+        block_type = block_to_blocktype(block)
+        self.assertEqual(block_type, BlockType.ORDERED_LIST)
+
+    def test_block_to_blocktype3(self):
+        block = ">blblbllb\n>blabla\n>jaja"
+        
+        block_type = block_to_blocktype(block)
+        self.assertEqual(block_type, BlockType.QUOTE)
+
+    def test_block_to_blocktype4(self):
+        block = """### head"""
+        
+        block_type = block_to_blocktype(block)
+        self.assertEqual(block_type, BlockType.HEADING)
+
+    def test_heading_levels(self):
+        for i in range(1, 7):
+            block = "#" * i + " Title"
+            assert block_to_blocktype(block) == BlockType.HEADING
+
+    def test_paragraph_fallback(self):
+        block = "Just a normal line\nwith another line"
+        assert block_to_blocktype(block) == BlockType.PARAGRAPH
+
+    def test_code_block_fence_only(self):
+        block = "```\nprint('hi')\n```"
+        assert block_to_blocktype(block) == BlockType.CODE
+
+    def test_code_block_requires_two_lines(self):
+        block = "```"
+        assert block_to_blocktype(block) == BlockType.PARAGRAPH
+
+    def test_quote_all_lines_prefixed(self):
+        block = "> a\n> b\n> c"
+        assert block_to_blocktype(block) == BlockType.QUOTE
+
+    def test_quote_rejects_mixed_lines(self):
+        block = "> a\nnot quote"
+        assert block_to_blocktype(block) == BlockType.PARAGRAPH
+
+    def test_unordered_list_all_lines_prefixed(self):
+        block = "- one\n- two\n- three"
+        assert block_to_blocktype(block) == BlockType.UNORDERED_LIST
+
+    def test_unordered_list_rejects_mixed_lines(self):
+        block = "- one\nx two"
+        assert block_to_blocktype(block) == BlockType.PARAGRAPH
+
+    def test_ordered_list_strict_sequence(self):
+        block = "1. one\n2. two\n3. three"
+        assert block_to_blocktype(block) == BlockType.ORDERED_LIST
+
+    def test_ordered_list_wrong_numbering(self):
+        block = "1. one\n3. three"
+        assert block_to_blocktype(block) == BlockType.PARAGRAPH
+
+    def test_empty_block_is_paragraph(self):
+        assert block_to_blocktype("") == BlockType.PARAGRAPH
+
+    def test_blank_line_inside_block_causes_paragraph(self):
+        block = "- one\n\n- two"
+        assert block_to_blocktype(block) == BlockType.PARAGRAPH
 
 
 if __name__ == "__main__":

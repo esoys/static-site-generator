@@ -1,4 +1,4 @@
-from textnode import TextType, TextNode
+from textnode import TextType, TextNode, BlockType
 from md_to_link import extract_markdown_links, extract_markdown_images
 
 
@@ -124,3 +124,44 @@ def text_to_textnodes(text):
             ),"_", TextType.ITALIC
         ), "**", TextType.BOLD
     )
+
+
+def markdown_to_blocks(markdown):
+    blocks = markdown.split("\n\n")
+    res_blocks = []
+    for block in blocks:
+        if block:
+            res_blocks.append(block.strip())
+
+    return res_blocks 
+    
+
+def block_to_blocktype(block):
+    lines = block.split("\n")
+
+    if not lines or (len(lines) == 1 and lines[0] == ""):
+        return BlockType.PARAGRAPH
+    
+    for i in range(1, 7):
+        if block.startswith("#" * i + " "):
+            return BlockType.HEADING
+
+    if len(lines) >= 2 and lines[0] == "```" and lines[-1] == "```":
+        return BlockType.CODE
+
+
+    if all(line.startswith(">") for line in lines): 
+        return BlockType.QUOTE
+
+    if all(line.startswith("- ") for line in lines): 
+        return BlockType.UNORDERED_LIST
+
+    ok = True
+    for idx, line in enumerate(lines, start=1):
+        if not line.startswith(f"{idx}. "):
+            ok = False
+            break
+    if ok:
+        return BlockType.ORDERED_LIST
+
+    return BlockType.PARAGRAPH
