@@ -149,7 +149,6 @@ def block_to_blocktype(block):
     if len(lines) >= 2 and lines[0] == "```" and lines[-1] == "```":
         return BlockType.CODE
 
-
     if all(line.startswith(">") for line in lines): 
         return BlockType.QUOTE
 
