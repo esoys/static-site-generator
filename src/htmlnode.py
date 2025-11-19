@@ -31,11 +31,10 @@ class LeafNode(HTMLNode):
         self.full_props = super().props_to_html()
 
     def to_html(self):
-        if not self.value:
-            raise ValueError
+        value = "" if self.value is None else self.value
 
         if not self.tag:
-            return self.value
+            return value
 
         return f'<{self.tag}{self.full_props}>{self.value}</{self.tag}>'
 

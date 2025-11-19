@@ -114,16 +114,13 @@ def split_nodes_links(old_nodes):
     return seperated_nodes
 
 
-def text_to_textnodes(text):
-    return split_nodes_delimiter(
-        split_nodes_delimiter(
-            split_nodes_delimiter(
-                split_nodes_images(
-                    split_nodes_links(text)
-                ), "`", TextType.CODE
-            ),"_", TextType.ITALIC
-        ), "**", TextType.BOLD
-    )
+def text_to_textnodes(nodes):
+    nodes = split_nodes_links(nodes)
+    nodes = split_nodes_images(nodes)
+    nodes = split_nodes_delimiter(nodes, "`", TextType.CODE)
+    nodes = split_nodes_delimiter(nodes, "_", TextType.ITALIC)
+    nodes = split_nodes_delimiter(nodes, "**", TextType.BOLD)
+    return nodes
 
 
 def markdown_to_blocks(markdown):
@@ -146,7 +143,9 @@ def block_to_blocktype(block):
         if block.startswith("#" * i + " "):
             return BlockType.HEADING
 
-    if len(lines) >= 2 and lines[0] == "```" and lines[-1] == "```":
+    first = lines[0].strip()
+    last = lines[-1].strip()
+    if len(lines) >= 3 and first.startswith("```") and last.startswith("```"):
         return BlockType.CODE
 
     if all(line.startswith(">") for line in lines): 

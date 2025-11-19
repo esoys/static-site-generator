@@ -8,7 +8,24 @@ def markdown_to_html_node(markdown):
     blocks = markdown_to_blocks(markdown)
     children = []
 
+    new_blocks = []
+
     for block in blocks:
+        if not block.strip():
+            continue
+
+        lines = [ln for ln in block.split("\n") if ln.strip()]
+        if len(lines) > 1 and all(ln.lstrip().startswith("#") for ln in lines):
+            new_blocks.extend(lines)
+        else:
+            new_blocks.append(block)
+
+    blocks = new_blocks
+
+    children = []
+    for block in blocks:
+        if not block.strip():
+            continue
         block_type = block_to_blocktype(block)
         children.append(block_to_htmlnode(block, block_type))
         
@@ -19,19 +36,28 @@ def block_to_htmlnode(block, block_type):
     if block_type == BlockType.CODE:
         block_lines = block.split("\n")
         cut_lines = block_lines[1:len(block_lines) - 1]
-        code_text = "\n".join(cut_lines)
 
-        text_node = TextNode(code_text, TextType.TEXT)
-        code_child = text_node_to_html_node(text_node)
+        stripped_lines = [ln.rstrip("\n") for ln in cut_lines]
+        leading_counts = [
+            len(ln) - len(ln.lstrip(" "))
+            for ln in stripped_lines
+            if ln.strip() != ""
+        ]
+        indent = min(leading_counts) if leading_counts else 0
+        normalized_lines = [ln[indent:] for ln in stripped_lines]
 
-        code_node = ParentNode("code", [code_child])
+        code_text = "\n".join(normalized_lines) + "\n"
+
+        code_node = LeafNode("code", code_text)
         pre_node = ParentNode("pre", [code_node])
-
         return pre_node
 
     if block_type == BlockType.PARAGRAPH:
-        children = text_to_children(block)
+        lines = [ln.strip() for ln in block.split("\n") if ln.strip()]
+        normalized = " ".join(lines)
+        children = text_to_children(normalized)
         return ParentNode("p", children)
+
 
     if block_type == BlockType.HEADING:
         num_hash = 0
@@ -52,7 +78,7 @@ def block_to_htmlnode(block, block_type):
                 cut_lines.append(line[1:].strip())
             else:
                 cut_lines.append(line.strip())
-        quote_text = "\n".join(cut_lines)
+        quote_text = " ".join(cut_lines)
         children = text_to_children(quote_text)
 
         return ParentNode("blockquote", children)
@@ -75,10 +101,9 @@ def block_to_htmlnode(block, block_type):
 
 
 def text_to_children(block):
-    text_nodes = text_to_textnodes(block)
-    html_nodes = []
-    for node in text_nodes:
-        html_nodes.append(text_node_to_html_node(node))
+    inital = [TextNode(block, TextType.TEXT)]
+    text_nodes = text_to_textnodes(inital)
+    children = [text_node_to_html_node(tn) for tn in text_nodes]
 
-    return html_nodes
+    return children
 
