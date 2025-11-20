@@ -38,7 +38,6 @@ def generate_page(from_path, template_path, dest_path):
     template_path = os.path.join(template_path, "template.html")
     dest_file_path = os.path.join(dest_path, "index.html")
 
-    print("template_path: ", template_path)
     
     with open(content_path, "r") as md_f:
         md = md_f.read()
@@ -61,17 +60,24 @@ def generate_page(from_path, template_path, dest_path):
 
 
 def generate_pages_recursive(dir_path_content, template_path, dest_dir_path):
-    content_path = os.path.join... 
-
+    dir_content = os.listdir(dir_path_content)
+    for file in dir_content:
+        file_path = os.path.abspath(os.path.join(dir_path_content, file))
+        if os.path.isfile(file_path):
+            generate_page(dir_path_content, template_path, dest_dir_path)
+        else:
+            dest_path = os.path.abspath(os.path.join(dest_dir_path, file))
+            os.mkdir(dest_path)
+            generate_pages_recursive(file_path, template_path, dest_path)
     
 
 def main():
     del_public()
     copy_static(static_dir, public_dir)
-    from_path = os.path.abspath(os.path.join(os.getcwd(), "content"))
+    content_path = os.path.abspath(os.path.join(os.getcwd(), "content"))
     template_path = os.path.abspath(os.getcwd())
     dest_path = public_dir
-    generate_page(from_path, template_path, dest_path)
+    generate_pages_recursive(content_path, template_path, dest_path)
 main()
 
 
