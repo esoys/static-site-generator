@@ -1,9 +1,11 @@
 import os
 import shutil
+import sys
 from markdown_to_html import markdown_to_html_node, extract_title 
      
-public_dir = os.path.abspath(os.path.join(os.getcwd(), "public"))
+public_dir = os.path.abspath(os.path.join(os.getcwd(), "docs"))
 static_dir = os.path.abspath(os.path.join(os.getcwd(), "static"))
+basepath = sys.argv[1] if len(sys.argv) > 1 else "/"
 
 
 def del_public(): 
@@ -12,7 +14,7 @@ def del_public():
             print(f"deleting: {public_dir}/{dir}")
         shutil.rmtree(public_dir)
     
-    os.mkdir("public")
+    os.mkdir("docs")
     
 
 def copy_static(source, target):
@@ -54,6 +56,8 @@ def generate_page(from_path, template_path, dest_path):
 
     template = template.replace("{{ Title }}", html_title)
     template = template.replace("{{ Content }}", html_body)
+    template = template.replace('href="/', f'href="{basepath}')
+    template = template.replace('src="/', f'href="{basepath}')
 
     with open(dest_file_path, "w") as dest_f:
         dest_f.write(template)
