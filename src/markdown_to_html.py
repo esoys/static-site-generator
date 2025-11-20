@@ -107,3 +107,15 @@ def text_to_children(block):
 
     return children
 
+
+def extract_title(markdown):
+    splitted_md = markdown.split("\n")
+
+    for line in splitted_md:
+        if line.strip() == "":
+            continue
+        if line.lstrip()[0] == "#" and line.lstrip()[1] != "#":
+            return line.split("#", 1)[1].strip()
+
+    raise Exception("no header")
+ 

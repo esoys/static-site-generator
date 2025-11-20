@@ -3,7 +3,7 @@ from md_to_textnode import split_nodes_images, split_nodes_links, split_nodes_de
 from textnode_to_html import text_node_to_html_node
 from htmlnode import HTMLNode, LeafNode, ParentNode
 from textnode import TextType, BlockType, TextNode
-from markdown_to_html import markdown_to_html_node
+from markdown_to_html import markdown_to_html_node, extract_title
 
 
 class TestMDToHTML(unittest.TestCase):
@@ -147,6 +147,44 @@ Paragraph with **bold** and `code`.
 
     def test_code_block_ignores_inline(self):
         md = ""
+
+
+    def test_extract_title1(self):
+        md = """
+# header
+### header2
+anderer text **bold**
+        """
+        title = extract_title(md)
+        extracted = "header"
+        self.assertEqual(title, extracted)
+
+
+    def test_extract_title2(self):
+        md = """
+#header
+### header2
+    anderer text **bold**
+        """
+        title = extract_title(md)
+        extracted = "header"
+        self.assertEqual(title, extracted)
+
+
+    def test_extract_title3(self):
+        md = """
+
+##blalbalba
+#header
+#header112
+### header2
+    anderer text **bold**
+        """
+        title = extract_title(md)
+        extracted = "header"
+        self.assertEqual(title, extracted)
+
+
 
 
 if __name__ == "__main__":
